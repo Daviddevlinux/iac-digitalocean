@@ -9,17 +9,18 @@ terraform {
 }
 
 resource "digitalocean_droplet" "vm-terraform" {
-  image  = "ubuntu-24-04-x64"
-  name   = var.droplet_name
-  region = var.droplet_region
-  size   = var.droplet_size
+  image    = "ubuntu-24-04-x64"
+  name     = "${var.droplet_name}-${count.index}"
+  region   = var.droplet_region
+  size     = var.droplet_size
   ssh_keys = [data.digitalocean_ssh_key.ssh_key.id]
+  count    = var.vms_count
 }
 
 resource "digitalocean_firewall" "firewall_vm" {
   name = "firewall-vm"
 
-  droplet_ids = [digitalocean_droplet.vm-terraform.id]
+  droplet_ids = digitalocean_droplet.vm-terraform[*].id
 
   inbound_rule {
     protocol         = "tcp"
@@ -47,17 +48,17 @@ resource "digitalocean_firewall" "firewall_vm" {
     port_range            = "22"
     destination_addresses = ["0.0.0.0/0", "::/0"]
   }
-    outbound_rule {
+  outbound_rule {
     protocol              = "tcp"
     port_range            = "53"
     destination_addresses = ["0.0.0.0/0", "::/0"]
   }
-    outbound_rule {
+  outbound_rule {
     protocol              = "tcp"
     port_range            = "80"
     destination_addresses = ["0.0.0.0/0", "::/0"]
   }
-    outbound_rule {
+  outbound_rule {
     protocol              = "tcp"
     port_range            = "443"
     destination_addresses = ["0.0.0.0/0", "::/0"]
